@@ -177,10 +177,16 @@ namespace Identity.Lib.Public.Managers
 
             try
             {
-                //TODO: use engine? validate before attempting save? 
-                result.Data = await _policyAccessor.SetPasswordPolicy(policy);
+                var validationResults = await _setPasswordPolicyEngine.ValidatePasswordPolicyForSave(policy);
+                if (validationResults.IsFailure)
+                {
+                    result.IsFailure = true;
+                    result.Message = validationResults.Message;
+                    return result;
+                }
+
+                result.Data = await _setPasswordPolicyEngine.SetPasswordPolicy(policy);
                 result.Message = "Success";
-                //TODO: use engine? call refresh policies
             }
             catch (Exception ex)
             {
@@ -198,10 +204,16 @@ namespace Identity.Lib.Public.Managers
 
             try
             {
-                //TODO: use engine? validate before attempting save? 
-                result.Data = await _policyAccessor.SetSignInPolicy(policy);
+                var validationResults = await _setSignInPolicyEngine.ValidateSignInPolicyForSave(policy);
+                if (validationResults.IsFailure)
+                {
+                    result.IsFailure = true;
+                    result.Message = validationResults.Message;
+                    return result;
+                }
+
+                result.Data = await _setSignInPolicyEngine.SetSignInPolicy(policy);
                 result.Message = "Success";
-                //TODO: use engine? call refresh policies
             }
             catch (Exception ex)
             {
@@ -219,10 +231,16 @@ namespace Identity.Lib.Public.Managers
 
             try
             {
-                //TODO: use engine? validate before attempting save? 
-                result.Data = await _policyAccessor.SetUserPolicy(policy);
+                var validationResults = await _setUserPolicyEngine.ValidateUserPolicyForSave(policy);
+                if (validationResults.IsFailure)
+                {
+                    result.IsFailure = true;
+                    result.Message = validationResults.Message;
+                    return result;
+                }
+
+                result.Data = await _setUserPolicyEngine.SetUserPolicy(policy);
                 result.Message = "Success";
-                //TODO: use engine? call refresh policies
             }
             catch (Exception ex)
             {
@@ -240,10 +258,16 @@ namespace Identity.Lib.Public.Managers
 
             try
             {
-                //TODO: use engine? validate before attempting save? 
-                result.Data = await _policyAccessor.SetUserStorePolicy(policy);
+                var validationResults = await _setUserStorePolicyEngine.ValidateUserStorePolicyForSave(policy);
+                if (validationResults.IsFailure)
+                {
+                    result.IsFailure = true;
+                    result.Message = validationResults.Message;
+                    return result;
+                }
+
+                result.Data = await _setUserStorePolicyEngine.SetUserStorePolicy(policy);
                 result.Message = "Success";
-                //TODO: use engine? call refresh policies
             }
             catch (Exception ex)
             {
