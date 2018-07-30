@@ -1,5 +1,5 @@
 ﻿
-namespace Identity.Lib.Public.Models
+namespace Identity.Lib.Public.Models.Policy
 {
     public sealed class UserPolicy : PolicyBase
     {

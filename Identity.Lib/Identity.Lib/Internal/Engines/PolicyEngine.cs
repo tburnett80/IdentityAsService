@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Identity.Lib.Internal.Accessors;
 using Identity.Lib.Public.Contracts.Accessors;
 using Identity.Lib.Public.Contracts.Engines;
 using Identity.Lib.Public.Models;
+using Identity.Lib.Public.Models.Policy;
 using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Lib.Internal.Engines
@@ -13,12 +13,15 @@ namespace Identity.Lib.Internal.Engines
     {
         #region Constructor and private members
         private readonly IPolicyAccessor _policyAccessor;
-        private static object _policyLock = new object();
+        private readonly ISharedPolicyAccessor _sharedPolicyAccessor;
 
-        public PolicyEngine(IPolicyAccessor policyAccessor)
+        public PolicyEngine(IPolicyAccessor policyAccessor, ISharedPolicyAccessor sharedPolicyAccessor)
         {
             _policyAccessor = policyAccessor
                 ?? throw new ArgumentNullException(nameof(policyAccessor));
+
+            _sharedPolicyAccessor = sharedPolicyAccessor
+                ?? throw new ArgumentNullException(nameof(sharedPolicyAccessor));
         }
         #endregion
 
@@ -146,103 +149,82 @@ namespace Identity.Lib.Internal.Engines
         #region IRefreshSharedPoliciesEngine
         public async Task RefreshPolicies()
         {
-            var lockout = await _policyAccessor.GetLockoutPolicy();
-            var password = await _policyAccessor.GetPasswordPolicy();
-            var signIn = await _policyAccessor.GetSignInPolicy();
-            var user = await _policyAccessor.GetUserPolicy();
-            var store = await _policyAccessor.GetUserStorePolicy();
+            var shared = _sharedPolicyAccessor.GetPolicy();
 
-            lock (_policyLock)
-            {
-                if(SharedPolicyOptionsSingletonAccessor.PolicyOptions == null)
-                    SharedPolicyOptionsSingletonAccessor.PolicyOptions = new IdentityOptions();
+            await _policyAccessor.GetLockoutPolicy()
+                .ContinueWith(async tsk => SetLockoutSharedPolicy(await tsk, shared.Lockout));
 
-                SetLockoutSharedPolicy(lockout, false);
-                SetPasswordSharedPolicy(password, false);
-                SetSignInSharedPolicy(signIn, false);
-                SetUserSharedPolicy(user, false);
-                SetUserStoredSharedPolicy(store, false);
-            }
+            await _policyAccessor.GetPasswordPolicy()
+                .ContinueWith(async tsk => SetPasswordSharedPolicy(await tsk, shared.Password));
+
+            await _policyAccessor.GetSignInPolicy()
+                .ContinueWith(async tsk => SetSignInSharedPolicy(await tsk, shared.SignIn));
+
+            await _policyAccessor.GetUserPolicy()
+                .ContinueWith(async tsk => SetUserSharedPolicy(await tsk, shared.User));
+
+            await _policyAccessor.GetUserStorePolicy()
+                .ContinueWith(async tsk => SetUserStoredSharedPolicy(await tsk, shared.Stores));
         }
 
-        private void SetLockoutSharedPolicy(LockoutPolicy policy, bool useLock = true)
+        private void SetLockoutSharedPolicy(LockoutPolicy policy, LockoutOptions shared = null)
         {
-            void Updater(LockoutPolicy pol)
-            {
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Lockout.AllowedForNewUsers = pol.AllowedForNewUsers;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Lockout.DefaultLockoutTimeSpan = pol.DefaultLockoutTimeSpan;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Lockout.MaxFailedAccessAttempts = pol.MaxFailedAccessAttempts;
-            }
+            if (shared == null)
+                shared = _sharedPolicyAccessor.GetPolicy().Lockout;
 
-            if (useLock)
-                lock (_policyLock)
-                    Updater(policy);
-            else
-                Updater(policy);
+            shared.AllowedForNewUsers = policy.AllowedForNewUsers;
+            shared.DefaultLockoutTimeSpan = policy.DefaultLockoutTimeSpan;
+            shared.MaxFailedAccessAttempts = policy.MaxFailedAccessAttempts;
+
+            _sharedPolicyAccessor.SetLockoutPolicy(shared);
         }
 
-        private void SetPasswordSharedPolicy(PasswordPolicy policy, bool useLock = true)
+        private void SetPasswordSharedPolicy(PasswordPolicy policy, PasswordOptions shared = null)
         {
-            void Updater(PasswordPolicy pol)
-            {
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Password.RequiredLength = pol.RequiredLength;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Password.RequireDigit = pol.RequireDigit;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Password.RequireLowercase = pol.RequireLowercase;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Password.RequireNonAlphanumeric = pol.RequireNonAlphanumeric;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Password.RequireUppercase = pol.RequireUppercase;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Password.RequiredUniqueChars = pol.RequiredUniqueChars;
-            }
+            if (shared == null)
+                shared = _sharedPolicyAccessor.GetPolicy().Password;
 
-            if (useLock)
-                lock (_policyLock)
-                    Updater(policy);
-            else
-                Updater(policy);
+            shared.RequiredLength = policy.RequiredLength;
+            shared.RequireDigit = policy.RequireDigit;
+            shared.RequireLowercase = policy.RequireLowercase;
+            shared.RequireNonAlphanumeric = policy.RequireNonAlphanumeric;
+            shared.RequireUppercase = policy.RequireUppercase;
+            shared.RequiredUniqueChars = policy.RequiredUniqueChars;
+
+            _sharedPolicyAccessor.SetPasswordPolicy(shared);
         }
 
-        private void SetSignInSharedPolicy(SignInPolicy policy, bool useLock = true)
+        private void SetSignInSharedPolicy(SignInPolicy policy, SignInOptions shared = null)
         {
-            void Updater(SignInPolicy pol)
-            {
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.SignIn.RequireConfirmedEmail = pol.RequireConfirmedEmail;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.SignIn.RequireConfirmedPhoneNumber = pol.RequireConfirmedPhoneNumber;
-            }
+            if (shared == null)
+                shared = _sharedPolicyAccessor.GetPolicy().SignIn;
 
-            if (useLock)
-                lock (_policyLock)
-                    Updater(policy);
-            else
-                Updater(policy);
+            shared.RequireConfirmedEmail = policy.RequireConfirmedEmail;
+            shared.RequireConfirmedPhoneNumber = policy.RequireConfirmedPhoneNumber;
+
+            _sharedPolicyAccessor.SetSignInPolicy(shared);
         }
 
-        private void SetUserSharedPolicy(UserPolicy policy, bool useLock = true)
+        private void SetUserSharedPolicy(UserPolicy policy, UserOptions shared = null)
         {
-            void Updater(UserPolicy pol)
-            {
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.User.AllowedUserNameCharacters = pol.AllowedUserNameCharacters;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.User.RequireUniqueEmail = pol.RequireUniqueEmail;
-            }
+            if (shared == null)
+                shared = _sharedPolicyAccessor.GetPolicy().User;
 
-            if (useLock)
-                lock (_policyLock)
-                    Updater(policy);
-            else
-                Updater(policy);
+            shared.AllowedUserNameCharacters = policy.AllowedUserNameCharacters;
+            shared.RequireUniqueEmail = policy.RequireUniqueEmail;
+
+            _sharedPolicyAccessor.SetUserPolicy(shared);
         }
 
-        private void SetUserStoredSharedPolicy(UserStorePolicy policy, bool useLock = true)
+        private void SetUserStoredSharedPolicy(UserStorePolicy policy, StoreOptions shared = null)
         {
-            void Updater(UserStorePolicy pol)
-            {
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Stores.MaxLengthForKeys = pol.MaxLengthForKeys;
-                SharedPolicyOptionsSingletonAccessor.PolicyOptions.Stores.ProtectPersonalData = pol.ProtectPersonalData;
-            }
+            if (shared == null)
+                shared = _sharedPolicyAccessor.GetPolicy().Stores;
 
-            if (useLock)
-                lock (_policyLock)
-                    Updater(policy);
-            else
-                Updater(policy);
+            shared.MaxLengthForKeys = policy.MaxLengthForKeys;
+            shared.ProtectPersonalData = policy.ProtectPersonalData;
+            
+            _sharedPolicyAccessor.SetUserStorePolicy(shared);
         }
         #endregion
     }

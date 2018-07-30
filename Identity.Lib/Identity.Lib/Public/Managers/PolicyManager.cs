@@ -4,6 +4,7 @@ using Identity.Lib.Public.Contracts.Accessors;
 using Identity.Lib.Public.Contracts.Engines;
 using Identity.Lib.Public.Contracts.Managers;
 using Identity.Lib.Public.Models;
+using Identity.Lib.Public.Models.Policy;
 
 namespace Identity.Lib.Public.Managers
 {
@@ -43,6 +44,10 @@ namespace Identity.Lib.Public.Managers
 
             _setUserStorePolicyEngine = setUserStorePolicyEngine
                 ?? throw new ArgumentNullException(nameof(setUserStorePolicyEngine));
+        }
+
+        public void Dispose()
+        {
         }
         #endregion
 

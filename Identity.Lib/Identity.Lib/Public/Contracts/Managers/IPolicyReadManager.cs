@@ -1,9 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Identity.Lib.Public.Models;
+using Identity.Lib.Public.Models.Policy;
 
 namespace Identity.Lib.Public.Contracts.Managers
 {
-    public interface IPolicyReadManager
+    public interface IPolicyReadManager : IDisposable
     {
         Task<GenericResult<LockoutPolicy>> GetLockoutPolicy();
 

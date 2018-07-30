@@ -7,7 +7,7 @@ namespace Identity.Lib.Internal.StoreProviders.EF.SqlServer
 {
     internal class UserDbContext : IdentityDbContext<UserEntity, RoleEntity, int, UserClaimEntity, UserRoleEntity, UserLoginEntity, UserRoleClaimEntity, UserTokenEntity>
     {
-        public UserDbContext(DbContextOptions options)
+        public UserDbContext(DbContextOptions<UserDbContext> options)
             : base(options)
         {
         }

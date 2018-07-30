@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Threading;
 using Identity.Lib.Internal.StoreProviders.Entities;
-using Identity.Lib.Public.Models;
+using Identity.Lib.Public.Extensions;
+using Identity.Lib.Public.Models.Identity;
+using Identity.Lib.Public.Models.Policy;
 
 namespace Identity.Lib.Internal.StoreProviders
 {
@@ -89,6 +92,26 @@ namespace Identity.Lib.Internal.StoreProviders
                 ProtectPersonalData = ent.ProtectPersonalData
             };
         }
+
+        internal static User ToModel(this UserEntity ent)
+        {
+            if (ent == null)
+                return null;
+
+            return new User
+            {
+                UserId = ent.Id,
+                LockoutEnabled = ent.LockoutEnabled,
+                LockoutEnd = ent.LockoutEnd,
+                TwoFactorEnabled = ent.TwoFactorEnabled,
+                PhoneNumberConfirmed = ent.PhoneNumberConfirmed,
+                PhoneNumber = ent.PhoneNumber,
+                EmailConfirmed = ent.EmailConfirmed,
+                Email = ent.Email,
+                UserName = ent.UserName,
+                AccessFailedCount = ent.AccessFailedCount
+            };
+        }
         #endregion
 
         #region Model to Entity conversions
@@ -169,6 +192,26 @@ namespace Identity.Lib.Internal.StoreProviders
                 CreatedById = model.CreatedById,
                 MaxLengthForKeys = model.MaxLengthForKeys,
                 ProtectPersonalData = model.ProtectPersonalData
+            };
+        }
+
+        internal static UserEntity ToEntity(this User model)
+        {
+            if (model == null)
+                return null;
+
+            return new UserEntity
+            {
+                Id = model.UserId,
+                LockoutEnabled = model.LockoutEnabled,
+                LockoutEnd = model.LockoutEnd,
+                TwoFactorEnabled = model.TwoFactorEnabled,
+                PhoneNumberConfirmed = model.PhoneNumberConfirmed,
+                PhoneNumber = model.PhoneNumber.TryTrim(),
+                EmailConfirmed = model.EmailConfirmed,
+                Email = model.Email.TryTrim(),
+                UserName = model.UserName.TryTrim(),
+                AccessFailedCount = model.AccessFailedCount
             };
         }
         #endregion

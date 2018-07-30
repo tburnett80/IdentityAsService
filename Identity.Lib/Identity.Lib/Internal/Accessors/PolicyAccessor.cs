@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Identity.Lib.Internal.StoreProviders;
 using Identity.Lib.Internal.StoreProviders.EF.SqlServer;
 using Identity.Lib.Public.Contracts.Accessors;
-using Identity.Lib.Public.Models;
+using Identity.Lib.Public.Models.Policy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Lib.Internal.Accessors
@@ -12,9 +12,9 @@ namespace Identity.Lib.Internal.Accessors
     internal class PolicyAccessor : IPolicyAccessor
     {
         #region Constructor and Private members
-        private readonly DbContextOptions _options;
+        private readonly DbContextOptions<UserDbContext> _options;
 
-        public PolicyAccessor(DbContextOptions options)
+        public PolicyAccessor(DbContextOptions<UserDbContext> options)
         {
             _options = options
                 ?? throw new ArgumentNullException(nameof(options));

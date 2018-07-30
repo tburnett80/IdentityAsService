@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Identity.Lib.Public.Models;
+using Identity.Lib.Public.Models.Policy;
 
 namespace Identity.Lib.Public.Contracts.Accessors
 {

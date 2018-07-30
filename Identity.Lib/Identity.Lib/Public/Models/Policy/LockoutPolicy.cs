@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Identity.Lib.Public.Models
+namespace Identity.Lib.Public.Models.Policy
 {
     public sealed class LockoutPolicy : PolicyBase
     {
